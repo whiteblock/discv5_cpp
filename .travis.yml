@@ -1,0 +1,9 @@
+language: cpp
+os: linux
+dist: xenial
+
+compiler:
+  - clang
+  - gcc
+
+# TODO add the tests once there is code
