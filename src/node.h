@@ -8,6 +8,7 @@
 #include <vector>
 #include <functional>
 #include <cstdint.h>
+#include <boost/asio.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 
@@ -58,9 +59,6 @@ namespace dv5
 
 	}; 
 	
-	class node_net{
-	public:
-	};
 	class node_id {
 	public:
 		static int bits = 512;
