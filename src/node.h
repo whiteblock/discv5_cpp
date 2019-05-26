@@ -16,6 +16,7 @@ using boost::asio::ip::address;
 namespace dv5
 {	
 	typedef vector<int8_t> hash_t;
+	typedef boost::asio::ip::udp::endpoint udp_addr;
 
 	enum class node_event = {
 		// Packet type events.
@@ -30,9 +31,9 @@ namespace dv5
 		topic_nodes_packet,
 
 		// Non-packet events.
-		pongTimeout = topic_nodes_packet + 256,
-		pingTimeout = pongTimeout + 1,
-		neighboursTimeout = pingTimeout + 1
+		pong_timeout = topic_nodes_packet + 256,
+		ping_timeout = pong_timeout + 1,
+		neighbours_timeout = ping_timeout + 1
 	};
 
 	struct find_node_query{
@@ -76,7 +77,7 @@ namespace dv5
 	};
 
 
-	class node{
+	class node{//ip::udp::endpoint
 	public:
 		boost::asio::ip::address ip;
 		uint16_t udp_port;
