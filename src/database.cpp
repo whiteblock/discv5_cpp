@@ -3,6 +3,8 @@
 using namespace std;
 using namespace dv5;
 
+
+
 dv5::node_db::node_db(node_id id) : _id(id),_quit(false) //TODO
 {
 	//open the db to operate in memory
@@ -223,7 +225,8 @@ void dv5::node_db::update_find_fails(const node_id& id,int fails)
 
 // localEndpoint returns the last local endpoint communicated to the
 // given remote node.
-func (db *nodeDB) localEndpoint(id NodeID) *rpcEndpoint {
+rpc_endpoint_t dv5::node_db::local_endpoint(const node_id& id)
+{
 	var ep rpcEndpoint
 	if err := db.fetchRLP(makeKey(id, nodeDBDiscoverLocalEndpoint), &ep); err != nil {
 		return nil
@@ -231,53 +234,13 @@ func (db *nodeDB) localEndpoint(id NodeID) *rpcEndpoint {
 	return &ep
 }
 
-func (db *nodeDB) updateLocalEndpoint(id NodeID, ep rpcEndpoint) error {
+void dv5::node_db::update_local_endpoint(const node_id&,rpc_endpoint_t ep)
+{
 	return db.storeRLP(makeKey(id, nodeDBDiscoverLocalEndpoint), &ep)
 }
 
-// querySeeds retrieves random nodes to be used as potential seed nodes
-// for bootstrapping.
-func (db *nodeDB) querySeeds(n int, maxAge time.Duration) []*Node {
-	var (
-		now   = time.Now()
-		nodes = make([]*Node, 0, n)
-		it    = db.lvl.NewIterator(nil, nil)
-		id    NodeID
-	)
-	defer it.Release()
-
-seek:
-	for seeks := 0; len(nodes) < n && seeks < n*5; seeks++ {
-		// Seek to a random entry. The first byte is incremented by a
-		// random amount each time in order to increase the likelihood
-		// of hitting all existing nodes in very small databases.
-		ctr := id[0]
-		rand.Read(id[:])
-		id[0] = ctr + id[0]%16
-		it.Seek(makeKey(id, nodeDBDiscoverRoot))
-
-		n := nextNode(it)
-		if n == nil {
-			id[0] = 0
-			continue seek // iterator exhausted
-		}
-		if n.ID == db.self {
-			continue seek
-		}
-		if now.Sub(db.lastPong(n.ID)) > maxAge {
-			continue seek
-		}
-		for i := range nodes {
-			if nodes[i].ID == n.ID {
-				continue seek // duplicate
-			}
-		}
-		nodes = append(nodes, n)
-	}
-	return nodes
-}
-
-func (db *nodeDB) fetchTopicRegTickets(id NodeID) (issued, used uint32) {
+std::tuple<uint32_t,uint32_t> fetch_topic_reg_tickets(const node_id& id)
+{
 	key := makeKey(id, nodeDBTopicRegTickets)
 	blob, _ := db.lvl.Get(key, nil)
 	if len(blob) != 8 {
@@ -288,7 +251,8 @@ func (db *nodeDB) fetchTopicRegTickets(id NodeID) (issued, used uint32) {
 	return
 }
 
-func (db *nodeDB) updateTopicRegTickets(id NodeID, issued, used uint32) error {
+void update_topic_reg_tickets(const node_id& id,uint32_t issued,uint32_t used)
+{
 	key := makeKey(id, nodeDBTopicRegTickets)
 	blob := make([]byte, 8)
 	binary.BigEndian.PutUint32(blob[0:4], issued)

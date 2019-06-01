@@ -40,6 +40,22 @@ public:
 
 	int64_t fetch_int64(const db_key_t& key);
 	void store_int64(const db_key_t& key,int64_t n);
+	Node node(node_id id);
+	void update_node(const Node& node);
+	void delete_node(const node_id& id);
+	void expirer();
+	void ensure_expirer();
+	void expire_nodes();
+	dv5::time_t last_ping(const node_id& id);
+	void update_last_ping(const node_id& id,dv5::time_t instance);
+	dv5::time_t last_pong(const node_id& id);
+	void update_last_pong(const node_id& id,dv5::time_t instance);
+	int find_fails(const node_id& id);
+	void update_find_fails(const node_id& id,int fails);
+	rpc_endpoint_t local_endpoint(const node_id& id);
+	void update_local_endpoint(const node_id&,rpc_endpoint_t ep);
+	std::tuple<uint32_t,uint32_t> fetch_topic_reg_tickets(const node_id& id);
+	void update_topic_reg_tickets(const node_id& id,uint32_t issued,uint32_t used);
 
 	template<typename T>
 	void store_rpl(const db_key_t& key,T val)
@@ -65,23 +81,51 @@ public:
 		return err
 	}
 
-	Node node(node_id id);
-	void update_node(const Node& node);
-	void delete_node(const node_id& id);
+	template<class Rep, class Period = std::ratio<1>>
+	vector<Node> query_seeds(int n,std::chrono::duration<Rep,Period>  max_age)
+	{
+		var (
+			now   = time.Now()
+			nodes = make([]*Node, 0, n)
+			it    = db.lvl.NewIterator(nil, nil)
+			id    NodeID
+		)
+		defer it.Release()
 
-	void expirer();
-	void ensure_expirer();
-	void expire_nodes();
+seek:
+	for seeks := 0; len(nodes) < n && seeks < n*5; seeks++ {
+		// Seek to a random entry. The first byte is incremented by a
+		// random amount each time in order to increase the likelihood
+		// of hitting all existing nodes in very small databases.
+		ctr := id[0]
+		rand.Read(id[:])
+		id[0] = ctr + id[0]%16
+		it.Seek(makeKey(id, nodeDBDiscoverRoot))
 
-	dv5::time_t last_ping(const node_id& id);
-	void update_last_ping(const node_id& id,dv5::time_t instance);
-	dv5::time_t last_pong(const node_id& id);
-	void update_last_pong(const node_id& id,dv5::time_t instance);
-	int find_fails(const node_id& id);
-	void update_find_fails(const node_id& id,int fails);
-
+		n := nextNode(it)
+		if n == nil {
+			id[0] = 0
+			continue seek // iterator exhausted
+		}
+		if n.ID == db.self {
+			continue seek
+		}
+		if now.Sub(db.lastPong(n.ID)) > maxAge {
+			continue seek
+		}
+		for i := range nodes {
+			if nodes[i].ID == n.ID {
+				continue seek // duplicate
+			}
+		}
+		nodes = append(nodes, n)
 	}
+	return nodes
+	}
+	
+
 };
+	
 	db_key_t make_key(node_id id, std::string field);
 	//ret id,field
 	std::tuple<node_id,string> split_key(db_key_t key);

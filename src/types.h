@@ -13,5 +13,6 @@ namespace dv5{
 	typedef std::vector<byte_t> public_key_t;//tmp until crypto lib is integrated
 	typedef std::vector<byte_t> hash_t;
 	typedef boost::asio::ip::udp::endpoint udp_addr_t;
+	typedef boost::asio::ip::tcp::endpoint rpc_endpoint_t;
 }
 #endif

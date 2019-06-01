@@ -1,6 +1,7 @@
 #include "network.h"
 
-
+using namespace std;
+using namespace dv5;
 func newNetwork(conn transport, ourPubkey ecdsa.PublicKey, dbPath string, netrestrict *netutil.Netlist) (*Network, error) {
 	ourID := PubkeyID(&ourPubkey)
 
