@@ -11,8 +11,6 @@
 #include <thread>
 
 namespace dv5{
-	nodeDBDiscoverLocalEndpoint = nodeDBDiscoverRoot + ":localendpoint"
-	nodeDBTopicRegTickets       = ":tickets"
 class node_db {
 public:
 	static std::chrono::seconds node_expiration = 24 * 60 * 60;
@@ -82,11 +80,12 @@ public:
 	}
 
 	template<class Rep, class Period = std::ratio<1>>
-	vector<Node> query_seeds(int n,std::chrono::duration<Rep,Period>  max_age)
+	vector<node> query_seeds(int n,std::chrono::duration<Rep,Period>  max_age)
 	{
+		auto now = std::chrono::high_resolution_clock::now();
+		vector<node> nodes(n);
+
 		var (
-			now   = time.Now()
-			nodes = make([]*Node, 0, n)
 			it    = db.lvl.NewIterator(nil, nil)
 			id    NodeID
 		)
