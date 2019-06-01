@@ -11,13 +11,11 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
+#include "types.h"
 
 using boost::asio::ip::address;
 namespace dv5
 {	
-	typedef vector<int8_t> hash_t;
-	typedef boost::asio::ip::udp::endpoint udp_addr;
-
 	enum class node_event = {
 		// Packet type events.
 		// These correspond to packet types in the UDP protocol.
@@ -39,7 +37,7 @@ namespace dv5
 	struct find_node_query{
 		std::weak_ptr<node> remote;
 		hash_t target;
-		boost::lockfree::spsc_queue<vector<std::weak_ptr<node>>> reply;
+		boost::lockfree::queue<vector<std::weak_ptr<node>>> reply;
 		int nresults;
 	};
 
@@ -63,12 +61,12 @@ namespace dv5
 	class node_id {
 	public:
 		static int bits = 512;
-		typedef std::vector<uint8_t> public_key_t;//tmp until crypto lib is integrated
-
+		
+		node_id(); //TODO
 		explicit node_id(const std::string& hex); //TODO
 		explicit node_id(const std::string_view hex); //TODO
 		explicit node_id(const public_key_t& pk); //TODO
-		explicit node_id(const std::vector<uint8_t>& hash,const std::vector<uint8_t> sig); //TODO
+		explicit node_id(const hash_t& hash,const std::vector<uint8_t> sig); //TODO
 
 		public_key_t get_pub_key() const;
 
